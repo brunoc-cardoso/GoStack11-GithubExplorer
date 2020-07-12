@@ -1,4 +1,4 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useEffect } from 'react';
 import { FiChevronRight } from 'react-icons/fi';
 import api from '../../services/api';
 
@@ -10,16 +10,35 @@ interface Repository {
   owner: {
     login: string;
     avatar_url: string;
-  }
+  };
   description: string;
 }
 
 const Dashboard: React.FC = () => {
   const [newRepo, setNewRepo] = useState('');
-  const [repositories, setRepositories] = useState<Repository[]>([]);
   const [inputError, setInputError] = useState('');
+  const [repositories, setRepositories] = useState<Repository[]>(() => {
+    const storagedRepositories = localStorage.getItem(
+      '@GithubExplorer:repositories',
+    );
 
-  async function handleAddRepository(event: FormEvent<HTMLFormElement>): Promise<void> {
+    if (storagedRepositories) {
+      return JSON.parse(storagedRepositories);
+    }
+
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem(
+      '@GithubExplorer:repositories',
+      JSON.stringify(repositories),
+    );
+  });
+
+  async function handleAddRepository(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     event.preventDefault();
 
     if (!newRepo) {
@@ -35,7 +54,7 @@ const Dashboard: React.FC = () => {
       setNewRepo('');
       setInputError('');
     } catch (err) {
-      setInputError('Erro na busca por esse repositório')
+      setInputError('Erro na busca por esse repositório');
     }
   }
 
@@ -53,12 +72,15 @@ const Dashboard: React.FC = () => {
         <button type="submit">Pesquisar</button>
       </Form>
 
-      { inputError && <Error>{inputError}</Error> }
+      {inputError && <Error>{inputError}</Error>}
 
       <Repositories>
-        { repositories.map(repository => (
-          <a key={repository.full_name} href="#">
-            <img src={repository.owner.avatar_url} alt={repository.owner.login} />
+        {repositories.map(repository => (
+          <a key={repository.full_name} href="test">
+            <img
+              src={repository.owner.avatar_url}
+              alt={repository.owner.login}
+            />
             <div>
               <strong>{repository.full_name}</strong>
               <p>{repository.description}</p>
@@ -70,6 +92,6 @@ const Dashboard: React.FC = () => {
       </Repositories>
     </>
   );
-}
+};
 
 export default Dashboard;
